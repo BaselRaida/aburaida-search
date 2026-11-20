@@ -81,6 +81,9 @@ details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;marg
 .titlerow h1{margin:0}
 .theme{flex:none;font:inherit;font-size:14px;display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
 .theme:focus-visible,.tab:focus-visible,.ib:focus-visible,.big:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.clearbtn{font:inherit;font-size:14px;font-weight:700;display:flex;align-items:center;gap:4px;border:1.5px solid var(--warn);background:transparent;color:var(--warn);border-radius:999px;padding:6px 14px;cursor:pointer}
+.clearbtn:disabled{opacity:.35;cursor:default}
+.clearbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 @media (max-width:480px){
@@ -113,7 +116,7 @@ details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;marg
 <div class="bar"><div class="wrap">
   <div class="top">
     <span>المحدد: <b id="selCount">0</b> رقم</span>
-    <button class="link" id="clearSel">إلغاء التحديد</button>
+    <button class="clearbtn" id="clearSel" type="button" disabled>✕ إلغاء تحديد الكل</button>
   </div>
   <div class="acts">
     <button class="big primary" id="copySel" disabled>نسخ الأرقام المحددة</button>
@@ -215,7 +218,7 @@ function render(){
     (terms.length || filter !== 'all' ? ` · النتائج: ${rows.length}` : '');
   const n = selected.size;
   document.getElementById('selCount').textContent = n;
-  ['copySel', 'markSel'].forEach(id => document.getElementById(id).disabled = !n);
+  ['copySel', 'markSel', 'clearSel'].forEach(id => document.getElementById(id).disabled = !n);
   updateSms();
 }
 
@@ -225,7 +228,7 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
   document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-pressed', x === b));
   render();
 }));
-document.getElementById('clearSel').addEventListener('click', () => { selected.clear(); save(); render(); });
+document.getElementById('clearSel').addEventListener('click', () => { const n = selected.size; selected.clear(); save(); render(); if (n) toast(`تم إلغاء تحديد ${n} رقم`); });
 document.getElementById('copySel').addEventListener('click', async () => {
   const nums = [...selected];
   if (await copy(nums.join(', '))) toast(`تم نسخ ${nums.length} رقم`);
