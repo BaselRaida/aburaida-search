@@ -129,8 +129,9 @@ details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;marg
   <div class="selline">المحدد: <b id="selCount">0</b> رقم</div>
   <div class="acts">
     <button class="big primary" id="copySel" disabled>نسخ الأرقام المحددة</button>
-    <a class="big" id="smsSel" href="#" aria-disabled="true">فتح رسالة جماعية</a>
-    <button class="big ok" id="markSel" disabled style="grid-column:1/-1">تعليم المحددين: تم الإرسال ✓</button>
+    <a class="big" id="smsSel" href="#" aria-disabled="true">فتح رسالة جماعية ✉</a>
+    <button class="big ok" id="markSel" disabled>✓ تم الإرسال</button>
+    <button class="big" id="unmarkSel" disabled>↺ لم يُرسل</button>
   </div>
   <details class="msg"><summary>نص رسالة الدعوة (اختياري)</summary>
     <textarea id="msg" placeholder="مثال: يسعدنا دعوتكم لحضور حفل زفاف…"></textarea>
@@ -232,7 +233,7 @@ function render(){
   const visiblePhones = new Set(rows.map(p => p.p).filter(Boolean));
   document.getElementById('totalCount').textContent = visiblePhones.size;
   document.getElementById('selAll').disabled = !visiblePhones.size || [...visiblePhones].every(x => selected.has(x));
-  ['copySel', 'markSel', 'clearSel'].forEach(id => document.getElementById(id).disabled = !n);
+  ['copySel', 'markSel', 'unmarkSel', 'clearSel'].forEach(id => document.getElementById(id).disabled = !n);
   updateSms();
 }
 
@@ -267,7 +268,20 @@ msgEl.addEventListener('input', updateSms);
 document.getElementById('markSel').addEventListener('click', () => {
   const n = selected.size;
   selected.forEach(p => sent.add(p)); selected.clear(); save(); render();
-  toast(`تم تعليم ${n} كمُرسل له`);
+  toast(`تم تعليم ${n} رقم: تم الإرسال`);
+});
+document.getElementById('unmarkSel').addEventListener('click', () => {
+  const n = selected.size;
+  selected.forEach(p => sent.delete(p)); selected.clear(); save(); render();
+  toast(`تم إرجاع ${n} رقم إلى: لم يُرسل`);
+});
+// Opening the group message marks those numbers as sent, then clears the selection
+// (after a moment, so the link still opens with every number in it).
+document.getElementById('smsSel').addEventListener('click', () => {
+  const nums = [...selected];
+  if (!nums.length) return;
+  nums.forEach(p => sent.add(p)); save();
+  setTimeout(() => { nums.forEach(p => selected.delete(p)); save(); render(); toast(`تم تعليم ${nums.length} رقم: تم الإرسال`); }, 400);
 });
 
 // Light/dark switch: light unless the viewer picks dark; the choice is remembered on this device.
