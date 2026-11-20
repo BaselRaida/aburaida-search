@@ -1,5 +1,5 @@
 // Network first, so updates show up right away; falls back to the cached copy when offline.
-const CACHE = 'aburaida-v1';
+const CACHE = 'aburaida-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
