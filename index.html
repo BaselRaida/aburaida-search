@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
 <title>دعوات عائلة أبو ريدة</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7,18 +13,19 @@
   --bg:#f7f4ef; --card:#ffffff; --ink:#1f1b16; --muted:#6f675d; --line:#e6dfd4;
   --accent:#8a5a2b; --accent-ink:#fff; --soft:#f1e7da; --ok:#2f7a4a; --ok-soft:#e3f2e8;
   --sel:#fff6e6; --sel-line:#e3b26b; --warn:#b4472d;
+  --gift-a:#8a5a2b; --gift-b:#c08a4a; --gift-ink:#fffaf2; --gift-line:#7a4d22;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#16130f; --card:#211d18; --ink:#f2ece4; --muted:#a59b8e; --line:#3a332b;
     --accent:#d39a5c; --accent-ink:#1a140d; --soft:#2c251d; --ok:#6cc58f; --ok-soft:#1d3326;
-    --sel:#33281a; --sel-line:#a57636; --warn:#e78a70; color-scheme:dark;
+    --sel:#33281a; --sel-line:#a57636; --warn:#e78a70; --gift-a:#5a3a1c; --gift-b:#8c6230; --gift-ink:#fff4e3; --gift-line:#a57636; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#16130f; --card:#211d18; --ink:#f2ece4; --muted:#a59b8e; --line:#3a332b;
   --accent:#d39a5c; --accent-ink:#1a140d; --soft:#2c251d; --ok:#6cc58f; --ok-soft:#1d3326;
-  --sel:#33281a; --sel-line:#a57636; --warn:#e78a70; color-scheme:dark;
+  --sel:#33281a; --sel-line:#a57636; --warn:#e78a70; --gift-a:#5a3a1c; --gift-b:#8c6230; --gift-ink:#fff4e3; --gift-line:#a57636; color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -60,6 +67,12 @@ a.big{display:flex;align-items:center;justify-content:center;text-decoration:non
 .link{background:none;border:0;color:var(--accent);font:inherit;font-size:14px;cursor:pointer;padding:0}
 details.msg{margin-top:8px;font-size:14px}
 details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;margin-top:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.gift{padding-block:14px 4px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.gift .card{max-width:760px;margin:0 auto;text-align:center;border-radius:18px;padding:18px 16px;background:linear-gradient(135deg,var(--gift-a),var(--gift-b));color:var(--gift-ink);border:1px solid var(--gift-line);box-shadow:0 6px 20px rgba(138,90,43,.18)}
+.gift .from{font-size:15px;font-weight:500;opacity:.92;text-wrap:balance}
+.gift .from b{font-weight:700}
+.gift .wish{font-size:21px;font-weight:700;line-height:1.6;margin-top:8px;text-wrap:balance}
+.gift .orn{display:block;font-size:13px;letter-spacing:.4em;opacity:.7;margin-bottom:4px}
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 @media (max-width:480px){
@@ -67,7 +80,14 @@ details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;marg
   .row{padding:9px 10px;gap:8px}
 }
 </style>
+</head>
+<body>
 <div id="app" dir="rtl" lang="ar">
+<section class="gift" aria-label="إهداء"><div class="card">
+  <span class="orn">✦ ✦ ✦</span>
+  <div class="from">هدية من <b>م. باسل</b> و<b>م. نادر</b> إلى صديقهم أخ العريس <b>م. ياسر</b></div>
+  <div class="wish">ألف مبارك ودامت دياركم عامرة بالأفراح والمسرّات</div>
+</div></section>
 <header><div class="wrap">
   <h1>دعوات حفل الزفاف · عائلة أبو ريدة</h1>
   <input id="q" class="search" type="search" placeholder="ابحث بالاسم أو اسم الزوج/ة أو رقم الجوال…" autocomplete="off">
@@ -223,3 +243,5 @@ document.getElementById('markSel').addEventListener('click', () => {
 render();
 </script>
 </div>
+</body>
+</html>
