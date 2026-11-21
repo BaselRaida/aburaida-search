@@ -89,6 +89,12 @@ details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;marg
 .clearbtn{font:inherit;font-size:14px;font-weight:700;display:flex;align-items:center;gap:4px;border:1.5px solid var(--warn);background:transparent;color:var(--warn);border-radius:999px;padding:6px 14px;cursor:pointer}
 .clearbtn:disabled{opacity:.35;cursor:default}
 .clearbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:14px 2px 8px;font-size:15px}
+.ghead:first-child{margin-top:2px}
+.ghead b{color:var(--accent)}
+.ghead .gc{color:var(--muted);font-size:13px}
+.gsel{font:inherit;font-size:13px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;padding:3px 12px;cursor:pointer}
+.gsel:disabled{opacity:.5;cursor:default}
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 @media (max-width:480px){
@@ -177,6 +183,7 @@ function words(s){
 DATA.forEach((p, i) => { p.i = i; p.w = words(p.n); });
 // Query words must appear in the name in the same order, next to each other.
 // The last word may be a beginning of a word only while nothing matches it fully (you are still typing).
+// Returns where the query starts in the name (0 = first name, 1 = father, 2 = grandfather...), or -1.
 function seqMatch(nameW, q, prefixLast){
   for (let i = 0; i + q.length <= nameW.length; i++){
     let ok = true;
@@ -184,17 +191,29 @@ function seqMatch(nameW, q, prefixLast){
       const a = nameW[i + j], b = q[j];
       if (!(a === b || (prefixLast && j === q.length - 1 && a.startsWith(b)))){ ok = false; break; }
     }
-    if (ok) return true;
+    if (ok) return i;
   }
-  return false;
+  return -1;
 }
+const ROLES = ['الاسم الأول', 'اسم الأب', 'اسم الجد', 'اسم جد الأب'];
+function roleName(i, len){ return (i === len - 1 && len >= 4) ? 'اسم العائلة' : (ROLES[i] || 'باقي الاسم'); }
+const collator = new Intl.Collator('ar');
+// Results come grouped: first names first, then fathers' names, then grandfathers', each group in alphabetical order.
 function search(raw){
   const digits = norm(raw).replace(/\D/g, '');
-  if (digits.length >= 3 && /^[\d\s+-]+$/.test(raw.replace(/[٠-٩]/g, '0'))) return DATA.filter(p => p.p.includes(digits));
+  if (digits.length >= 3 && /^[\d\s+-]+$/.test(raw.replace(/[٠-٩]/g, '0'))){
+    return DATA.filter(p => p.p.includes(digits)).map(p => (p._g = null, p));
+  }
   const q = words(raw);
-  if (!q.length) return DATA;
-  const exact = DATA.filter(p => seqMatch(p.w, q, false));
-  return exact.length ? exact : DATA.filter(p => seqMatch(p.w, q, true));
+  if (!q.length){ DATA.forEach(p => p._g = null); return DATA; }
+  const run = prefix => DATA.map(p => [p, seqMatch(p.w, q, prefix)]).filter(x => x[1] >= 0);
+  let hits = run(false);
+  if (!hits.length) hits = run(true);
+  hits.forEach(([p, i]) => {
+    p._pos = i;
+    p._g = q.map((_, j) => roleName(i + j, p.w.length)).join(' و');
+  });
+  return hits.map(x => x[0]).sort((a, b) => (a._pos - b._pos) || collator.compare(a.n, b.n));
 }
 
 function save(){ store.set('abr_sent', [...sent]); store.set('abr_sel', [...selected]); }
@@ -223,11 +242,31 @@ function render(){
   if (filter === 'selected') rows = rows.filter(p => selected.has(p.p));
 
   currentRows = rows;
-  const LIMIT = 300;
+  const LIMIT = 700;
   const shown = rows.slice(0, LIMIT);
   listEl.innerHTML = shown.length ? '' : '<div class="empty">لا توجد نتائج</div>';
   const frag = document.createDocumentFragment();
+  let lastG;
   shown.forEach(p => {
+    if (p._g && p._g !== lastG){
+      lastG = p._g;
+      const groupPhones = [...new Set(rows.filter(x => x._g === p._g && x.p).map(x => x.p))];
+      const h = document.createElement('div');
+      h.className = 'ghead';
+      const label = document.createElement('span');
+      label.innerHTML = '<b></b> <span class="gq"></span> <span class="gc"></span>';
+      label.querySelector('b').textContent = p._g + ':';
+      label.querySelector('.gq').textContent = raw;
+      label.querySelector('.gc').textContent = '(' + rows.filter(x => x._g === p._g).length + ')';
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'gsel';
+      const allIn = groupPhones.length && groupPhones.every(x => selected.has(x));
+      btn.textContent = allIn ? '✓ محددين' : 'تحديد المجموعة';
+      btn.disabled = !groupPhones.length || allIn;
+      btn.addEventListener('click', () => { groupPhones.forEach(x => selected.add(x)); save(); render(); toast(`تم تحديد ${groupPhones.length} رقم`); });
+      h.append(label, btn);
+      frag.appendChild(h);
+    }
     const isSent = sent.has(p.p), isSel = selected.has(p.p), noPhone = !p.p;
     const d = document.createElement('div');
     d.className = 'row' + (isSel ? ' selected' : '') + (isSent ? ' sent' : '');
