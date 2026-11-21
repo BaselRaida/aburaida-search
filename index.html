@@ -106,7 +106,7 @@ details.msg textarea{width:100%;min-height:70px;font:inherit;font-size:15px;marg
 </div></section>
 <header><div class="wrap">
   <div class="titlerow"><h1>دعوات حفل الزفاف · عائلة أبو ريدة</h1><button class="theme" id="themeBtn" type="button"></button></div>
-  <input id="q" class="search" type="search" placeholder="ابحث بالاسم أو اسم الزوج/ة أو رقم الجوال…" autocomplete="off">
+  <input id="q" class="search" type="search" placeholder="اكتب اسم رب الأسرة (مثلاً: محمد سليم) أو رقم الجوال…" autocomplete="off">
   <div class="tabs" role="group" aria-label="تصفية">
     <button class="tab" data-f="all" aria-pressed="true">الكل</button>
     <button class="tab" data-f="unsent" aria-pressed="false">لم يُرسل له</button>
@@ -163,7 +163,39 @@ function norm(s){
     .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
     .replace(/\s+/g, '').toLowerCase();
 }
-DATA.forEach((p, i) => { p.i = i; p.key = norm(p.n + '|' + p.s + '|' + p.p + '|' + p.r); });
+// Search looks at the head of family's name only (not the spouse), word by word.
+// "ابو"/"أبو" and "عبد" are joined to the next word so "أبو ريدة" = "ابوريدة" and "عبد الله" = "عبدالله".
+function words(s){
+  const w = String(s || '').trim().split(/\s+/).map(norm).filter(Boolean);
+  const out = [];
+  for (let i = 0; i < w.length; i++){
+    if ((w[i] === 'ابو' || w[i] === 'عبد') && i + 1 < w.length){ out.push(w[i] + w[i + 1]); i++; }
+    else out.push(w[i]);
+  }
+  return out;
+}
+DATA.forEach((p, i) => { p.i = i; p.w = words(p.n); });
+// Query words must appear in the name in the same order, next to each other.
+// The last word may be a beginning of a word only while nothing matches it fully (you are still typing).
+function seqMatch(nameW, q, prefixLast){
+  for (let i = 0; i + q.length <= nameW.length; i++){
+    let ok = true;
+    for (let j = 0; j < q.length; j++){
+      const a = nameW[i + j], b = q[j];
+      if (!(a === b || (prefixLast && j === q.length - 1 && a.startsWith(b)))){ ok = false; break; }
+    }
+    if (ok) return true;
+  }
+  return false;
+}
+function search(raw){
+  const digits = norm(raw).replace(/\D/g, '');
+  if (digits.length >= 3 && /^[\d\s+-]+$/.test(raw.replace(/[٠-٩]/g, '0'))) return DATA.filter(p => p.p.includes(digits));
+  const q = words(raw);
+  if (!q.length) return DATA;
+  const exact = DATA.filter(p => seqMatch(p.w, q, false));
+  return exact.length ? exact : DATA.filter(p => seqMatch(p.w, q, true));
+}
 
 function save(){ store.set('abr_sent', [...sent]); store.set('abr_sel', [...selected]); }
 
@@ -183,8 +215,9 @@ async function copy(text){
 
 const listEl = document.getElementById('list');
 function render(){
-  const terms = document.getElementById('q').value.trim().split(/\s+/).map(norm).filter(Boolean);
-  let rows = DATA.filter(p => terms.every(t => p.key.includes(t)));
+  const raw = document.getElementById('q').value.trim();
+  const terms = raw ? [raw] : [];
+  let rows = search(raw);
   if (filter === 'sent') rows = rows.filter(p => sent.has(p.p));
   if (filter === 'unsent') rows = rows.filter(p => !sent.has(p.p));
   if (filter === 'selected') rows = rows.filter(p => selected.has(p.p));
